@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPX Strike Placement Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; color: #1a1a1a; padding: 24px; max-width: 900px; margin: 0 auto; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a1a; color: #f0f0f0; }
+    .price-input-group { background: #2a2a2a; border-color: #444; }
+    .price-input-group input { color: #f0f0f0; }
+    .card { background: #222; border-color: #383838; }
+    .stat-card { background: #2a2a2a; }
+    table.strikes th, table.strikes td { border-color: #383838; }
+    hr.divider { border-color: #383838; }
+    .badge-put { background: #3a1515; color: #f09595; }
+    .badge-call { background: #1a2e1a; color: #97c459; }
+  }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+  .input-row { display: flex; align-items: center; gap: 16px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .price-input-group { display: flex; align-items: center; gap: 8px; background: #f5f5f5; border: 0.5px solid #ccc; border-radius: 12px; padding: 10px 16px; }
+  .price-input-group span { font-size: 20px; font-weight: 500; color: #888; }
+  .price-input-group input { font-size: 22px; font-weight: 500; border: none; background: transparent; color: #1a1a1a; width: 130px; outline: none; }
+  .ref-note { font-size: 12px; color: #aaa; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; color: #888; text-transform: uppercase; margin: 1.5rem 0 0.5rem; }
+  table.strikes { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.strikes th { font-size: 11px; font-weight: 500; color: #888; text-align: left; padding: 6px 10px; border-bottom: 0.5px solid #e0e0e0; white-space: nowrap; }
+  table.strikes th.r { text-align: right; }
+  table.strikes td { padding: 7px 10px; border-bottom: 0.5px solid #f0f0f0; color: #1a1a1a; vertical-align: middle; }
+  table.strikes td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  table.strikes tr:last-child td { border-bottom: none; }
+  .pct-up { color: #27500a; font-weight: 500; }
+  .pct-dn { color: #a32d2d; font-weight: 500; }
+  .strike-val { font-size: 15px; font-weight: 500; }
+  .pts-val { color: #888; font-size: 12px; }
+  .prob-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .prob-bar { height: 6px; border-radius: 3px; background: #e8e8e8; flex: 1; min-width: 40px; }
+  .prob-bar-inner { height: 100%; border-radius: 3px; }
+  .card { background: #ffffff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1rem 1.25rem; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat-card { background: #f5f5f5; border-radius: 8px; padding: 0.75rem 1rem; }
+  .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .stat-val { font-size: 18px; font-weight: 500; }
+  .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  hr.divider { border: none; border-top: 0.5px solid #e8e8e8; margin: 1.5rem 0; }
+  @media (max-width: 600px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (prefers-color-scheme: dark) {
+    .pct-up { color: #97c459; }
+    .pct-dn { color: #f09595; }
+    table.strikes td { color: #f0f0f0; }
+    .prob-bar { background: #444; }
+  }
+</style>
+</head>
+<body>
+
+<h1>SPX Strike Placement Calculator</h1>
+<p class="subtitle">Based on 4,080 trading days (2010–2025) — enter current SPX price to update all values</p>
+
+<div class="input-row">
+  <div class="price-input-group">
+    <span>SPX</span>
+    <input type="number" id="spxPrice" value="5600" min="100" max="20000" step="1" />
+  </div>
+  <span class="ref-note">Strikes rounded to nearest 5 pts &nbsp;|&nbsp; Touch probabilities are historical close-to-close</span>
+</div>
+
+<div class="stat-grid" id="statGrid"></div>
+
+<hr class="divider">
+<div class="section-label">Put spread strikes — downside</div>
+<div class="card">
+  <table class="strikes" id="putTable">
+    <thead><tr>
+      <th>Level</th>
+      <th class="r">Move %</th>
+      <th class="r">Points away</th>
+      <th class="r">Strike</th>
+      <th class="r">Hist. touch prob.</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="section-label" style="margin-top:1.25rem;">Call spread strikes — upside</div>
+<div class="card">
+  <table class="strikes" id="callTable">
+    <thead><tr>
+      <th>Level</th>
+      <th class="r">Move %</th>
+      <th class="r">Points away</th>
+      <th class="r">Strike</th>
+      <th class="r">Hist. touch prob.</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<hr class="divider">
+<div class="section-label">Absolute move reference</div>
+<div class="card">
+  <table class="strikes" id="absTable">
+    <thead><tr>
+      <th>Percentile</th>
+      <th class="r">Move %</th>
+      <th class="r">Points (either dir.)</th>
+      <th class="r">Put strike</th>
+      <th class="r">Call strike</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const PUT_LEVELS = [
+  { label: "Aggressive (25th pct)",   pct: -0.3811,  prob: 25 },
+  { label: "Moderate (10th pct)",     pct: -1.1097,  prob: 10 },
+  { label: "Conservative (1st pct)",  pct: -3.1290,  prob:  1 },
+  { label: "Extreme tail (min)",      pct: -11.9841, prob: 0.02 },
+];
+const CALL_LEVELS = [
+  { label: "Aggressive (75th pct)",   pct: 0.5677,  prob: 25 },
+  { label: "Moderate (90th pct)",     pct: 1.1483,  prob: 10 },
+  { label: "Conservative (99th pct)", pct: 2.6502,  prob:  1 },
+  { label: "Extreme tail (max)",      pct: 9.5154,  prob: 0.02 },
+];
+const ABS_LEVELS = [
+  { label: "50th pct (median)", pct: 0.4854 },
+  { label: "75th pct",          pct: 0.9718 },
+  { label: "90th pct",          pct: 1.6038 },
+  { label: "95th pct",          pct: 2.1174 },
+  { label: "99th pct",          pct: 3.5707 },
+];
+
+function round5(v) { return Math.round(v / 5) * 5; }
+function fmt(n, dec=2) { return n.toLocaleString('en-US', {minimumFractionDigits: dec, maximumFractionDigits: dec}); }
+
+function probBar(prob, color) {
+  const w = Math.min(100, prob * 2.5);
+  return `<div class="prob-bar-wrap"><div class="prob-bar"><div class="prob-bar-inner" style="width:${w}%;background:${color};"></div></div><span style="font-size:12px;color:#888;min-width:36px;text-align:right;">~${prob < 1 ? prob.toFixed(2) : prob}%</span></div>`;
+}
+
+function render() {
+  const price = parseFloat(document.getElementById('spxPrice').value) || 5600;
+
+  const stats = [
+    { label: "Median daily move", val: "+0.07%",  sub: "slight upward drift" },
+    { label: "Std deviation",     val: "±1.09%",  sub: `±${fmt(price*0.0109,0)} pts` },
+    { label: "Up day rate",       val: "54.6%",   sub: "2,227 of 4,080 days" },
+    { label: "1% OTM touch rate", val: "~10%",    sub: "~1 in 10 trading days" },
+  ];
+  document.getElementById('statGrid').innerHTML = stats.map(s =>
+    `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`
+  ).join('');
+
+  document.querySelector('#putTable tbody').innerHTML = PUT_LEVELS.map(row => {
+    const pts    = Math.abs(price * row.pct / 100);
+    const strike = round5(price + price * row.pct / 100);
+    return `<tr>
+      <td>${row.label}</td>
+      <td class="r"><span class="pct-dn">${row.pct.toFixed(3)}%</span></td>
+      <td class="r pts-val">${fmt(pts,0)} pts</td>
+      <td class="r strike-val">${fmt(strike,0)}</td>
+      <td class="r">${probBar(row.prob, '#E24B4A')}</td>
+    </tr>`;
+  }).join('');
+
+  document.querySelector('#callTable tbody').innerHTML = CALL_LEVELS.map(row => {
+    const pts    = Math.abs(price * row.pct / 100);
+    const strike = round5(price + price * row.pct / 100);
+    return `<tr>
+      <td>${row.label}</td>
+      <td class="r"><span class="pct-up">+${row.pct.toFixed(3)}%</span></td>
+      <td class="r pts-val">${fmt(pts,0)} pts</td>
+      <td class="r strike-val">${fmt(strike,0)}</td>
+      <td class="r">${probBar(row.prob, '#639922')}</td>
+    </tr>`;
+  }).join('');
+
+  document.querySelector('#absTable tbody').innerHTML = ABS_LEVELS.map(row => {
+    const pts        = price * row.pct / 100;
+    const putStrike  = round5(price - pts);
+    const callStrike = round5(price + pts);
+    return `<tr>
+      <td>${row.label}</td>
+      <td class="r" style="color:#888;">±${row.pct.toFixed(3)}%</td>
+      <td class="r pts-val">±${fmt(pts,0)} pts</td>
+      <td class="r"><span class="pct-dn">${fmt(putStrike,0)}</span></td>
+      <td class="r"><span class="pct-up">${fmt(callStrike,0)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('spxPrice').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
